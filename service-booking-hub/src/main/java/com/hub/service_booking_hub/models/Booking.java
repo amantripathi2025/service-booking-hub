@@ -35,4 +35,7 @@ public class Booking {
     private String specializedNotes; // E.g., "Ghar ke piche wale door se aana"
 
     private LocalDateTime createdAt;
+
+    public void setCreatedAT(LocalDateTime now) {
+    }
 }
