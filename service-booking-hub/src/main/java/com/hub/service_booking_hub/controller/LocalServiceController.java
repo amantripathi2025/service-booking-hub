@@ -11,31 +11,46 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/services")
+@RequestMapping("/services")
 @CrossOrigin(origins = "*")
 public class LocalServiceController {
 
     @Autowired
     private LocalServiceRepository serviceRepository;
 
+    // 1. Startup Service Add Karne ki API
     @PostMapping("/add")
     public ResponseEntity<?> addLocalService(@RequestBody LocalService service) {
-        // Validation: Owner limit set karna bhool toh nahi gaya?
         if (service.getMaxDailyBookings() <= 0) {
             return new ResponseEntity<>("Error: Mandatory Field! Please set max daily customer capacity.", HttpStatus.BAD_REQUEST);
         }
 
         service.setCreatedAt(LocalDateTime.now());
         service.setAvailable(true);
-        service.setCurrentDailyBookingsCount(0); // Shuru mein zero bookings hui hain
+        service.setCurrentDailyBookingsCount(0);
 
         LocalService savedService = serviceRepository.save(service);
         return new ResponseEntity<>(savedService, HttpStatus.CREATED);
     }
 
+    // 2. Saari Services Ek Saath Dekhne ki API
     @GetMapping("/all")
     public ResponseEntity<List<LocalService>> getAllLocalService() {
         List<LocalService> services = serviceRepository.findAll();
+        return new ResponseEntity<>(services, HttpStatus.OK);
+    }
+
+    // 3. Category ke base par Filter karne ki API
+    @GetMapping("/category/{catName}")
+    public ResponseEntity<List<LocalService>> getServicesByCategory(@PathVariable String catName) {
+        List<LocalService> services = serviceRepository.findByCategory(catName);
+        return new ResponseEntity<>(services, HttpStatus.OK);
+    }
+
+    // 4. Budget ke base par Filter karne ki API
+    @GetMapping("/budget/{maxPrice}")
+    public ResponseEntity<List<LocalService>> getServicesByBudget(@PathVariable double maxPrice) {
+        List<LocalService> services = serviceRepository.findByPriceLessThanEqual(maxPrice);
         return new ResponseEntity<>(services, HttpStatus.OK);
     }
 }

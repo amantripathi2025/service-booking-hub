@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface UserRepository extends MongoRepository<User, String> {
     // Ye custom method login ke time email se user check karne ke kaam aayega
     Optional<User> findByEmail(String email);
+    boolean existsByEmail(String email);
 }

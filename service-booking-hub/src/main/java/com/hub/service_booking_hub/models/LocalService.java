@@ -18,7 +18,6 @@ public class LocalService {
     private int durationInMinutes;
     private boolean isAvailable;
     private LocalDateTime createdAt;
-
     private int maxDailyBookings;
     private int currentDailyBookingsCount;
 }
