@@ -7,6 +7,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -20,12 +25,25 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Postman testing ke liye disable kiya
-                .cors(cors -> cors.disable()) // CORS errors ko rokne ke liye
+                .csrf(csrf -> csrf.disable()) // CSRF off
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // 🔥 Ye CORS ki beemari jad se khatam karega
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll() // 🔥 SAB KUCH KHOL DIYA! Ab bouncer kisi ko nahi rokega
+                        .anyRequest().permitAll() // Sabke liye darwaza khula hai
                 );
 
         return http.build();
+    }
+
+    // CORS ka global rule yahan define kar diya
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173")); // Sirf tere React app ko allow karega
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }
