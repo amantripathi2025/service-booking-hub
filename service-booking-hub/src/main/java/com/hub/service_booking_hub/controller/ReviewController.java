@@ -10,9 +10,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/reviews")
+@RequestMapping("/reviews") // Postman wale URL se match karne ke liye /api/v1 lagaya hai
 @CrossOrigin(origins = "*")
 public class ReviewController {
 
@@ -22,28 +23,47 @@ public class ReviewController {
     @Autowired
     private BookingRepository bookingRepository;
 
-    // 1. Naya Review Add karne ki API
+    // 1. Customer naya review dega
     @PostMapping("/add")
     public ResponseEntity<?> addReview(@RequestBody Review review) {
-        // Validation: Rating 1 se 5 ke beech honi chahiye
-        if (review.getRating() < 1 || review.getRating() > 5) {
-            return new ResponseEntity<>("Error: Rating sirf 1 se 5 ke beech ho sakti hai!", HttpStatus.BAD_REQUEST);
-        }
 
-        // Validation: Check karo ki booking sach mein exist karti hai ya nahi
-        if (!bookingRepository.existsById(review.getBookingId())) {
-            return new ResponseEntity<>("Error: Yeh Booking ID valid nahi hai!", HttpStatus.NOT_FOUND);
+        // Null Check for Booking ID (Crash bachane ke liye)
+        if (review.getBookingId() != null && !review.getBookingId().isEmpty()) {
+            // Validation: Check karo ki booking sach mein exist karti hai ya nahi
+            if (!bookingRepository.existsById(review.getBookingId())) {
+                return new ResponseEntity<>("Error: Yeh Booking ID valid nahi hai!", HttpStatus.NOT_FOUND);
+            }
         }
 
         review.setCreatedAt(LocalDateTime.now());
-        Review savedReview = reviewRepository.save(review);
-        return new ResponseEntity<>(savedReview, HttpStatus.CREATED);
+
+        try {
+            // Naya review insert kar rahe hain
+            Review savedReview = reviewRepository.insert(review);
+            return new ResponseEntity<>(savedReview, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error aa gaya: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    // 2. Kisi Service ke saare reviews dekhne ki API
-    @GetMapping("/service/{serviceId}")
-    public ResponseEntity<List<Review>> getServiceReviews(@PathVariable String serviceId) {
-        List<Review> reviews = reviewRepository.findByServiceId(serviceId);
+    // 2. Kisi Service/Shop ke saare reviews dekhne ki API
+    @GetMapping("/shop/{shopId}")
+    public ResponseEntity<List<Review>> getServiceReviews(@PathVariable String shopId) {
+        // Note: Yahan frontend "shopId" bhej raha hai URL mein, toh usko handle kiya hai
+        List<Review> reviews = reviewRepository.findByServiceId(shopId);
         return new ResponseEntity<>(reviews, HttpStatus.OK);
+    }
+
+    // 3. Vendor Reply karega
+    @PutMapping("/{id}/reply")
+    public ResponseEntity<?> replyToReview(@PathVariable String id, @RequestBody String vendorReply) {
+        Optional<Review> optReview = reviewRepository.findById(id);
+        if (optReview.isPresent()) {
+            Review review = optReview.get();
+            review.setVendorReply(vendorReply);
+            reviewRepository.save(review);
+            return new ResponseEntity<>(review, HttpStatus.OK);
+        }
+        return new ResponseEntity<>("Review nahi mila!", HttpStatus.NOT_FOUND);
     }
 }

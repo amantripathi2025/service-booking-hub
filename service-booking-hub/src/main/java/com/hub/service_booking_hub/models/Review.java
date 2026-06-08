@@ -17,4 +17,6 @@ public class Review {
     private int rating;         // 1 se 5 ke beech star rating
     private String comment;     // Customer ka feedback text
     private LocalDateTime createdAt;
+    private String vendorReply; // Vendor ka jawab
+    private String customerEmail;
 }

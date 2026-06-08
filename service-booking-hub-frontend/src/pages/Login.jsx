@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Mail, Lock, Loader2 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom"; // Dono ek saath import hain
+import { Link, useNavigate } from "react-router-dom";
 import api from "../api"; 
 
 function Login() {
@@ -11,7 +11,7 @@ function Login() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   
-  const navigate = useNavigate(); // Navigation hook set hai
+  const navigate = useNavigate(); 
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -20,7 +20,7 @@ function Login() {
     setSuccessMessage("");
 
     try {
-      // Backend ko hits maar rahe hain
+      // Backend ko hit maar rahe hain
       const response = await api.post("/users/login", {
         email: email,
         password: password,
@@ -28,8 +28,19 @@ function Login() {
 
       console.log("Backend Response:", response.data);
       
+      // 🔥 MAIN LOGIC: Role aur Name ko localStorage mein store karo
+      // Agar backend JSON bhej raha hai jisme role hai
+      if (response.data && response.data.role) {
+        localStorage.setItem("userRole", response.data.role);
+        localStorage.setItem("userName", response.data.name || email.split('@')[0]);
+      } else {
+        // Fallback: Agar backend abhi sirf text bhej raha hai, toh app crash na ho
+        localStorage.setItem("userRole", "VENDOR"); // Default fallback
+        localStorage.setItem("userName", email.split('@')[0]);
+      }
+      
       // Success text set karo
-      setSuccessMessage(response.data); 
+      setSuccessMessage("Login Successful! Redirecting..."); 
       
       // 1.5 second ka delay taaki user success message dekh sake, fir seedha dashboard!
       setTimeout(() => {

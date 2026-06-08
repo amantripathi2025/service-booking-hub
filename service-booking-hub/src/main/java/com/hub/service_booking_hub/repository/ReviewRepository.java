@@ -10,4 +10,5 @@ public interface ReviewRepository extends MongoRepository<Review, String> {
 
     // Kisi specific service ke saare reviews nikalne ke liye
     List<Review> findByServiceId(String serviceId);
+
 }
