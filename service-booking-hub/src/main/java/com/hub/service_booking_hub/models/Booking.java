@@ -29,4 +29,12 @@ public class Booking {
     private String status; // "PENDING", "ACCEPTED", "COMPLETED"
     private LocalDateTime bookingDate;
     private String serviceId; // Yeh add karte hi error chala jayega
+
+    // Customer Contact
+    private String customerPhone;
+
+    // Queue & ETA System Variables
+    private Integer estimatedTimeMinutes; // Kitna time lagega (e.g., 30)
+    private Integer queuePosition;        // Line mein konsa number hai (e.g., 1, 2, 3)
+    private LocalDateTime startTime;      // Jab vendor kaam shuru kare
 }
