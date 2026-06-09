@@ -10,9 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/services")
@@ -22,69 +20,16 @@ public class LocalServiceController {
     @Autowired
     private LocalServiceRepository serviceRepository;
 
-    // React se aane wala data yahan hit karega
-    @PostMapping
-    public ResponseEntity<?> addLocalService(@RequestBody LocalService service) {
-        service.setCreatedAt(LocalDateTime.now());
-        service.setAvailable(true);
-        service.setCurrentDailyBookingsCount(0);
-
-        if (service.getMaxDailyBookings() <= 0) {
-            service.setMaxDailyBookings(10); // Default set kar diya taaki error na aaye
-        }
-
-        LocalService savedService = serviceRepository.save(service);
-        return new ResponseEntity<>(savedService, HttpStatus.CREATED);
-    }
-
-    // Saari Services dekhne ke liye API
     @GetMapping("/all")
-    public ResponseEntity<List<LocalService>> getAllLocalService() {
-        List<LocalService> services = serviceRepository.findAll();
-        return new ResponseEntity<>(services, HttpStatus.OK);
-    }
-
-    // Category filter API
-    @GetMapping("/category/{catName}")
-    public ResponseEntity<List<LocalService>> getServicesByCategory(@PathVariable String catName) {
-        List<LocalService> services = serviceRepository.findByCategory(catName);
-        return new ResponseEntity<>(services, HttpStatus.OK);
-    }
-
-    // Shop aur Menu Update karne ki API
-    @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateLocalService(@PathVariable String id, @RequestBody LocalService updatedService) {
-        Optional<LocalService> existingService = serviceRepository.findById(id);
-
-        if (existingService.isPresent()) {
-            LocalService serviceToUpdate = existingService.get();
-            // Naya data set kar rahe hain
-            serviceToUpdate.setShopName(updatedService.getShopName());
-            serviceToUpdate.setCategory(updatedService.getCategory());
-            serviceToUpdate.setDescription(updatedService.getDescription());
-            serviceToUpdate.setMenuItems(updatedService.getMenuItems());
-
-            // Database mein save
-            LocalService saved = serviceRepository.save(serviceToUpdate);
-            return new ResponseEntity<>(saved, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>("Shop nahi mili bhai!", HttpStatus.NOT_FOUND);
-        }
-    }
-
-    // Shop Delete karne ki API (Agar vendor dukan band kar de)
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteLocalService(@PathVariable String id) {
+    public ResponseEntity<List<LocalService>> getAllServices() {
         try {
-            serviceRepository.deleteById(id);
-            return new ResponseEntity<>("Shop successfully delete ho gayi!", HttpStatus.OK);
+            List<LocalService> services = serviceRepository.findAll();
+            return ResponseEntity.ok(services);
         } catch (Exception e) {
-            return new ResponseEntity<>("Delete nahi ho paya: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    // 📍 NAYI API: Customer ke aas-paas ki dukanein dhoondhne ke liye
-    // 📍 NAYI API: Customer ke aas-paas ki dukanein dhoondhne ke liye
     @GetMapping("/nearby")
     public ResponseEntity<List<LocalService>> getNearbyServices(
             @RequestParam double lat,
@@ -92,17 +37,39 @@ public class LocalServiceController {
             @RequestParam(defaultValue = "10") double radiusKm) {
 
         try {
-            Point customerLocation = new Point(lng, lat); // MongoDB format: Longitude pehle
+            Point customerLocation = new Point(lng, lat);
             Distance distance = new Distance(radiusKm, Metrics.KILOMETERS);
 
             List<LocalService> nearbyShops = serviceRepository.findByLocationNear(customerLocation, distance);
-
-            // 🔥 Clean Fix: No constructor ambiguity
             return ResponseEntity.ok(nearbyShops);
 
         } catch (Exception e) {
-            // 🔥 Clean Fix: Null pass karne ki tension hi khatam
+            // 🔥 AMBIGUITY FIXED: No more new ResponseEntity<>(null, ...) syntax error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateService(@PathVariable String id, @RequestBody LocalService updatedService) {
+        try {
+            if (!serviceRepository.existsById(id)) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Shop nahi mili!");
+            }
+            updatedService.setId(id);
+            LocalService saved = serviceRepository.save(updatedService);
+            return ResponseEntity.ok(saved);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Update fail: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> deleteService(@PathVariable String id) {
+        try {
+            serviceRepository.deleteById(id);
+            return ResponseEntity.ok("Shop deleted successfully!");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Delete fail: " + e.getMessage());
         }
     }
 }

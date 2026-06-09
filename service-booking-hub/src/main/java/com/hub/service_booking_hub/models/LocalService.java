@@ -43,11 +43,28 @@ public class LocalService {
     // Naya field UPI ID text save karne ke liye (paise@ybl)
     private String upiQrCode;
 
+    // ✅ FIXED: Shop par live delay (Minutes mein) - Default 0 rahega
+    private int currentDelayMinutes = 0;
+
     // 🔥 YE RAHI TERI MISSING CLASS (Iske andar aayega estimatedTime)
     @Data
     public static class MenuItem {
         private String name;
         private double price;
         private Integer estimatedTime; // NAYA: Time (minutes mein) save karne ke liye
+
+        // --- OPTIONAL SHOWCASE FEATURES (VENDOR KI MARZI) ---
+        // Shop ki gallery photos save karne ke liye (Base64 list)
+        private List<String> shopPhotos;
+
+        // Shop ke amenities tags (e.g., ["AC", "Free Wi-Fi", "Parking"])
+        private List<String> features;
+
+        // Naye fields QR aur UPI ID ko permanent save karne ke liye
+        private String upiQrImage;
+        private String upiQrCode;
+
+        // Service ke andar specific photos save karne ke liye
+        private List<String> photos;
     }
 }

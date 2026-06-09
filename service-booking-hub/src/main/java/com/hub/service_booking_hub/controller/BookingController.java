@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -35,17 +36,22 @@ public class BookingController {
         if (shopOpt.isPresent()) {
             LocalService shop = shopOpt.get();
 
-            // 2. Aaj ki pure shop ki ACCEPTED bookings fetch karo
+            // 2. Pure shop ki bookings fetch karo
             List<Booking> existingBookings = bookingRepository.findByShopId(booking.getShopId());
+
+            // 🔥 BUG FIX: Sirf AAJ KI (Today's Date) ACCEPTED bookings count karo
+            LocalDate today = LocalDate.now();
             long acceptedToday = existingBookings.stream()
-                    .filter(b -> "ACCEPTED".equals(b.getStatus()))
+                    .filter(b -> "ACCEPTED".equals(b.getStatus())
+                            && b.getBookingDate() != null
+                            && b.getBookingDate().toLocalDate().equals(today))
                     .count();
 
-            // 3. 🔥 AUTO-ACCEPT LOGIC (Using your LocalService maxDailyBookings field) 🔥
+            // 3. AUTO-ACCEPT LOGIC (Using shop maxDailyBookings limit)
             if (acceptedToday < shop.getMaxDailyBookings()) {
                 booking.setStatus("ACCEPTED");
             } else {
-                booking.setStatus("WAITING"); // Limit exceed hone par seedha waiting list
+                booking.setStatus("WAITING"); // Limit exceed hone par automatic waiting list
             }
         } else {
             booking.setStatus("PENDING"); // Safe fallback agar shop exist na kare
@@ -59,9 +65,10 @@ public class BookingController {
 
         try {
             Booking savedBooking = bookingRepository.save(booking);
-            return new ResponseEntity<>(savedBooking, HttpStatus.CREATED);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedBooking);
         } catch (Exception e) {
-            return new ResponseEntity<>("Booking fail ho gayi: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Booking fail ho gayi bhai: " + e.getMessage());
         }
     }
 
@@ -69,7 +76,7 @@ public class BookingController {
     @GetMapping("/shop/{shopId}")
     public ResponseEntity<List<Booking>> getBookingsForShop(@PathVariable String shopId) {
         List<Booking> bookings = bookingRepository.findByShopId(shopId);
-        return new ResponseEntity<>(bookings, HttpStatus.OK);
+        return ResponseEntity.ok(bookings);
     }
 
     // 1. Booking ko Accept karne ke liye
@@ -90,21 +97,42 @@ public class BookingController {
         return updateBookingStatus(id, "COMPLETED");
     }
 
-    // Helper method status sync up rakhne ke liye
-    private ResponseEntity<?> updateBookingStatus(String id, String status) {
+    // ✅ FIXED: Changed ResponseEntity<?> to ResponseEntity<Object>
+    // Helper method status sync up rakhne ke liye (Ambiguity Error Fixed)
+    private ResponseEntity<Object> updateBookingStatus(String id, String status) {
         Optional<Booking> bookingOpt = bookingRepository.findById(id);
         if (bookingOpt.isPresent()) {
             Booking booking = bookingOpt.get();
             booking.setStatus(status);
 
-            // Agar vendor kaam complete kar deta hai toh payment status bhi automatic PAID ho jaye (For QR/Cash)
+            // Agar vendor kaam complete kar deta hai toh payment status bhi automatic PAID ho jaye
             if ("COMPLETED".equals(status)) {
                 booking.setPaymentStatus("PAID");
             }
 
             bookingRepository.save(booking);
-            return new ResponseEntity<>(booking, HttpStatus.OK);
+            return ResponseEntity.ok(booking);
         }
-        return new ResponseEntity<>("Booking nahi mili bhai!", HttpStatus.NOT_FOUND);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Booking nahi mili bhai!");
+    }
+
+    // ⏳ API: Shop par live delay time add karne ke liye
+    @PutMapping("/shop/{shopId}/delay")
+    public ResponseEntity<?> updateShopDelay(@PathVariable String shopId, @RequestParam int minutes) {
+        try {
+            Optional<LocalService> shopOpt = serviceRepository.findById(shopId);
+            if (shopOpt.isPresent()) {
+                LocalService shop = shopOpt.get();
+
+                // Live delay minutes ko update karo
+                shop.setCurrentDelayMinutes(minutes);
+                serviceRepository.save(shop);
+
+                return ResponseEntity.ok("Shop delay successfully updated to " + minutes + " mins!");
+            }
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Shop nahi mili bhai!");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Delay update failed: " + e.getMessage());
+        }
     }
 }
