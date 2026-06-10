@@ -29,22 +29,27 @@ function Login() {
       console.log("Backend Response:", response.data);
       
       // 🔥 MAIN LOGIC: Role aur Name ko localStorage mein store karo
-      // Agar backend JSON bhej raha hai jisme role hai
+      let userRole = "VENDOR"; // Default fallback
+      
       if (response.data && response.data.role) {
-        localStorage.setItem("userRole", response.data.role);
+        userRole = response.data.role;
+        localStorage.setItem("userRole", userRole);
         localStorage.setItem("userName", response.data.name || email.split('@')[0]);
       } else {
-        // Fallback: Agar backend abhi sirf text bhej raha hai, toh app crash na ho
-        localStorage.setItem("userRole", "VENDOR"); // Default fallback
+        localStorage.setItem("userRole", userRole); 
         localStorage.setItem("userName", email.split('@')[0]);
       }
       
       // Success text set karo
       setSuccessMessage("Login Successful! Redirecting..."); 
       
-      // 1.5 second ka delay taaki user success message dekh sake, fir seedha dashboard!
+      // 🔥 THE FIX: Role ke hisaab se sahi page par bhejo
       setTimeout(() => {
-        navigate("/dashboard");
+        if (userRole === "CUSTOMER") {
+          navigate("/customer-home"); // Customer apne radar page par
+        } else {
+          navigate("/dashboard"); // Vendor apne dashboard par
+        }
       }, 1500);
       
     } catch (error) {

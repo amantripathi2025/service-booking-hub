@@ -25,10 +25,9 @@ public class Booking {
     private String paymentMode; // "CASH" ya "ONLINE"
     private String paymentStatus; // "PENDING" ya "PAID"
 
-    // Booking ka status
-    private String status; // "PENDING", "ACCEPTED", "COMPLETED"
-    private LocalDateTime bookingDate;
-    private String serviceId; // Yeh add karte hi error chala jayega
+    // Booking ka status (Controller isi ko use kar raha hai)
+    private String status; // "PENDING", "ACCEPTED", "COMPLETED", "REJECTED"
+    private String serviceId;
 
     // Customer Contact
     private String customerPhone;
@@ -37,4 +36,8 @@ public class Booking {
     private Integer estimatedTimeMinutes; // Kitna time lagega (e.g., 30)
     private Integer queuePosition;        // Line mein konsa number hai (e.g., 1, 2, 3)
     private LocalDateTime startTime;      // Jab vendor kaam shuru kare
+
+    // 🔥 FIXED: Dono ko single declaration aur String format me rakha hai
+    private String bookingDate;  // Frontend se "2026-06-12" handle karne ke liye
+    private String bookingTime;  // Frontend se "10:00 AM" handle karne ke liye
 }

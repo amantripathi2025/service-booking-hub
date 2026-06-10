@@ -79,7 +79,10 @@ function Profile() {
               </div>
               <div className="z-10 mt-10">
                 <h2 className="text-2xl font-bold text-white">{userData.name}</h2>
-                <p className="text-blue-400 font-medium text-sm mt-1">{userData.role} (Service Provider)</p>
+                {/* 🔥 THE FIX: Role ke hisaab se text change hoga 🔥 */}
+                <p className="text-blue-400 font-medium text-sm mt-1">
+                  {userData.role} {userData.role === "VENDOR" ? "(Service Provider)" : "(User Account)"}
+                </p>
               </div>
             </div>
             

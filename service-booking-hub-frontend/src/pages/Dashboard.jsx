@@ -275,7 +275,6 @@ function Dashboard() {
           </nav>
         </div>
 
-        {/* --- CRITICAL AREA: ACCOUNT DELETION SYSTEM --- */}
         <div className="space-y-2 border-t border-gray-800 pt-6">
           <button onClick={handleNuclearDelete} className="w-full flex items-center gap-3 px-4 py-2 text-red-500 hover:text-white bg-red-950/20 border border-red-950 hover:bg-red-600 rounded-xl font-bold text-sm transition-all text-left">
             <ShieldAlert size={18}/> Delete My Account
@@ -294,7 +293,6 @@ function Dashboard() {
             <p className="text-gray-400 text-sm mt-1">Manage configurations, auto-limits, and live financial analytics.</p>
           </div>
           
-          {/* NOTIFICATION BELL SYSTEM */}
           <div className="relative">
             <button 
               onClick={() => setShowNotifications(!showNotifications)}
@@ -420,14 +418,14 @@ function Dashboard() {
                         </div>
                       </td>
                       <td className="p-4 text-gray-300">{booking.serviceName || "Full Package"}</td>
-                     <td className="p-4 font-bold text-blue-400">
-  <div className="flex flex-col">
-    <span className="flex items-center"><IndianRupee size={14}/>{booking.price}</span>
-    <span className={`text-[10px] uppercase font-bold mt-1 ${booking.paymentMode === 'UPI' ? 'text-purple-400' : 'text-emerald-500'}`}>
-      {booking.paymentMode ? `Via ${booking.paymentMode}` : "Via CASH"}
-    </span>
-  </div>
-</td>
+                      <td className="p-4 font-bold text-blue-400">
+                        <div className="flex flex-col">
+                          <span className="flex items-center"><IndianRupee size={14}/>{booking.price}</span>
+                          <span className={`text-[10px] uppercase font-bold mt-1 ${booking.paymentMode === 'UPI' ? 'text-purple-400' : 'text-emerald-500'}`}>
+                            {booking.paymentMode ? `Via ${booking.paymentMode}` : "Via CASH"}
+                          </span>
+                        </div>
+                      </td>
                       <td className="p-4">
                         <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${
                           booking.status === 'ACCEPTED' ? 'bg-green-500/10 text-green-400' :
@@ -435,20 +433,31 @@ function Dashboard() {
                           booking.status === 'REJECTED' ? 'bg-red-500/10 text-red-400' : 'bg-yellow-500/10 text-yellow-400'
                         }`}>{booking.status}</span>
                       </td>
-                      <td className="p-4 flex gap-4 items-center">
+                      <td className="p-4 flex gap-3 items-center flex-wrap">
+                        {/* 🛠️ Accept / Reject Controls */}
                         {(booking.status === 'PENDING' || booking.status === 'WAITING') && (
                           <div className="flex gap-2">
                             <button onClick={async () => { await api.put(`/bookings/${booking.id}/accept`); triggerRefresh(); }} className="px-3 py-1 bg-green-600 hover:bg-green-700 text-xs font-bold rounded">Accept</button>
                             <button onClick={async () => { if(window.confirm("Reject karna hai?")) { await api.put(`/bookings/${booking.id}/reject`); triggerRefresh(); } }} className="px-3 py-1 bg-red-600 hover:bg-red-700 text-xs font-bold rounded">Reject</button>
                           </div>
                         )}
+                        {/* 🛠️ Ongoing Controls */}
                         {booking.status === 'ACCEPTED' && (
                           <div className="flex items-center gap-3">
                             <button onClick={async () => { await api.put(`/bookings/${booking.id}/complete`); triggerRefresh(); }} className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-xs font-bold rounded">Mark Complete</button>
                             <span className="text-xs text-gray-400 flex items-center gap-1"><QrCode size={14}/> QR Ready</span>
                           </div>
                         )}
-                        {booking.status === 'COMPLETED' && <span className="text-xs text-emerald-400">Paid & Resolved</span>}
+                        {booking.status === 'COMPLETED' && <span className="text-xs text-emerald-400 font-semibold">Paid & Resolved</span>}
+
+                        {/* 🔥 THE MASTER COMM GATEWAY FIX: Connects straight to VendorChat.jsx 🔥 */}
+                        <button 
+                          onClick={() => navigate(`/vendor-chat/${booking.id || 'BOK-9821'}`)}
+                          className="px-3 py-1 bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white rounded text-xs font-bold transition-all flex items-center gap-1 border border-purple-500/20"
+                          title="Open Customer Communication Box"
+                        >
+                          <MessageSquare size={12} /> Chat / Call
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -546,7 +555,6 @@ function Dashboard() {
                 <textarea value={editingShop.description} onChange={(e) => setEditingShop({...editingShop, description: e.target.value})} className="w-full bg-gray-950 border border-gray-700 text-white rounded-lg p-3 focus:border-blue-500 outline-none" rows="2" required />
               </div>
 
-              {/* DUKAN / WORKSPACE PHOTOS UPLOAD SYSTEM (ALWAYS VISIBLE DELETE) */}
               <div className="border-t border-gray-800 pt-4">
                 <label className="block text-sm font-bold text-blue-400 mb-2">Upload Dukan / Workspace Photos</label>
                 <input type="file" multiple accept="image/*" onChange={handleShopPhotosUpload} className="w-full bg-gray-950 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm outline-none cursor-pointer file:bg-gray-800 file:text-white file:border-0 file:rounded file:px-3 file:mr-3" />
@@ -555,7 +563,6 @@ function Dashboard() {
                     {editingShop.shopPhotos.map((img, idx) => (
                       <div key={idx} className="relative inline-block flex-shrink-0">
                         <img src={img} alt="Shop Preview" className="h-16 w-20 object-cover rounded-md border border-gray-700" />
-                        {/* ❌ ALWAYS VISIBLE DELETE BUTTON FOR SHOP PHOTO */}
                         <button type="button" onClick={() => setEditingShop({...editingShop, shopPhotos: editingShop.shopPhotos.filter((_, i) => i !== idx)})} className="absolute -top-2 -right-2 p-1 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg z-10 block">
                           <X size={12}/>
                         </button>
@@ -565,7 +572,6 @@ function Dashboard() {
                 )}
               </div>
 
-              {/* SERVICES LIST & SPECIFIC PHOTOS SYSTEM (ALWAYS VISIBLE DELETE) */}
               <div className="border-t border-gray-800 pt-4">
                 <h3 className="text-lg font-semibold mb-4 text-white">Services Menu & Specific Photos</h3>
                 <div className="space-y-4">
@@ -577,7 +583,6 @@ function Dashboard() {
                         <button type="button" onClick={() => handleRemoveMenuItem(index)} className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg"><Trash2 size={18} /></button>
                       </div>
                       
-                      {/* Photo Upload strictly per Service */}
                       <div className="space-y-1 bg-gray-900 p-2 rounded-lg border border-gray-800">
                         <label className="text-xs text-gray-400 block font-medium mb-1">Add Photos for ({item.name || "this service"})</label>
                         <input type="file" multiple accept="image/*" onChange={(e) => handleServicePhotosUpload(index, e)} className="w-full text-xs text-gray-500 file:mr-3 file:py-1 file:px-2 file:rounded file:border-0 file:bg-gray-800 file:text-white cursor-pointer" />
@@ -586,7 +591,6 @@ function Dashboard() {
                             {item.photos.map((src, pIdx) => (
                               <div key={pIdx} className="relative inline-block flex-shrink-0">
                                 <img src={src} alt="Service showcase" className="h-12 w-14 object-cover rounded border border-gray-700" />
-                                {/* ❌ ALWAYS VISIBLE DELETE BUTTON FOR SERVICE PHOTO */}
                                 <button type="button" onClick={() => {
                                   const updatedMenu = [...editingShop.menuItems];
                                   updatedMenu[index].photos = updatedMenu[index].photos.filter((_, i) => i !== pIdx);
@@ -610,7 +614,7 @@ function Dashboard() {
         </div>
       )}
 
-      {/* MODAL 2: VIP HUB MANAGEMENT CONFIGURATION BOX (QR WITH DELETE BTN) */}
+      {/* MODAL 2: VIP HUB MANAGEMENT CONFIGURATION BOX */}
       {showSettings && settingsShop && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-md p-6 relative shadow-2xl">
@@ -618,7 +622,6 @@ function Dashboard() {
             <h2 className="text-xl font-bold mb-4 border-b border-gray-800 pb-2">Hub Management</h2>
             <form onSubmit={handleUpdateSettings} className="space-y-6">
               
-              {/* ETA Mins Core Trackers */}
               <div>
                 <label className="block text-sm font-bold text-gray-400 mb-2">Set Estimated Time (Mins) per Service</label>
                 <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
@@ -646,7 +649,6 @@ function Dashboard() {
                 </div>
               </div>
 
-              {/* UPI Payment Upload System with Always Visible Trash Icon */}
               <div className="border-t border-gray-800 pt-4 relative">
                 <label className="block text-sm font-bold text-gray-400 mb-2 flex items-center gap-2"><QrCode size={16}/> Upload UPI QR Code</label>
                 <input 
@@ -656,7 +658,6 @@ function Dashboard() {
                   className="w-full bg-gray-950 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm outline-none file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer"
                 />
                 
-                {/* ❌ VISIBLE TRASH ICON FOR QR DELETE */}
                 {settingsShop.upiQrImage && (
                   <div className="mt-3 p-2 bg-gray-950 border border-gray-800 rounded-lg flex items-center gap-4 relative w-max">
                     <img src={settingsShop.upiQrImage} alt="QR Preview" className="h-16 w-16 object-cover rounded-md border border-gray-700" />
