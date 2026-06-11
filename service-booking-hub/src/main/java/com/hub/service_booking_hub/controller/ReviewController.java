@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/reviews") // Postman wale URL se match karne ke liye /api/v1 lagaya hai
+@RequestMapping("/reviews")
 @CrossOrigin(origins = "*")
 public class ReviewController {
 
@@ -23,13 +23,9 @@ public class ReviewController {
     @Autowired
     private BookingRepository bookingRepository;
 
-    // 1. Customer naya review dega
     @PostMapping("/add")
     public ResponseEntity<?> addReview(@RequestBody Review review) {
-
-        // Null Check for Booking ID (Crash bachane ke liye)
         if (review.getBookingId() != null && !review.getBookingId().isEmpty()) {
-            // Validation: Check karo ki booking sach mein exist karti hai ya nahi
             if (!bookingRepository.existsById(review.getBookingId())) {
                 return new ResponseEntity<>("Error: Yeh Booking ID valid nahi hai!", HttpStatus.NOT_FOUND);
             }
@@ -38,7 +34,6 @@ public class ReviewController {
         review.setCreatedAt(LocalDateTime.now());
 
         try {
-            // Naya review insert kar rahe hain
             Review savedReview = reviewRepository.insert(review);
             return new ResponseEntity<>(savedReview, HttpStatus.CREATED);
         } catch (Exception e) {
@@ -46,15 +41,13 @@ public class ReviewController {
         }
     }
 
-    // 2. Kisi Service/Shop ke saare reviews dekhne ki API
     @GetMapping("/shop/{shopId}")
     public ResponseEntity<List<Review>> getServiceReviews(@PathVariable String shopId) {
-        // Note: Yahan frontend "shopId" bhej raha hai URL mein, toh usko handle kiya hai
-        List<Review> reviews = reviewRepository.findByServiceId(shopId);
+        // 🔥 YAHAN CHANGE KIYA HAI: findByServiceId ko findByShopId kar diya hai
+        List<Review> reviews = reviewRepository.findByShopId(shopId);
         return new ResponseEntity<>(reviews, HttpStatus.OK);
     }
 
-    // 3. Vendor Reply karega
     @PutMapping("/{id}/reply")
     public ResponseEntity<?> replyToReview(@PathVariable String id, @RequestBody String vendorReply) {
         Optional<Review> optReview = reviewRepository.findById(id);

@@ -91,6 +91,9 @@ function Dashboard() {
 
   const triggerRefresh = () => setRefresh(prev => prev + 1);
 
+  // Derived state for notifications dropdown
+  const pendingBookings = myBookings.filter(b => b.status === 'PENDING' || b.status === 'WAITING');
+
   // Live Delay Handler
   const handleSetDelay = async (shopId, mins) => {
     if (!shopId) return;
@@ -175,7 +178,7 @@ function Dashboard() {
     setSettingsShop({ ...settingsShop, menuItems: newMenu });
   };
 
-  // --- MEDIA HANDLERS ---
+  // --- MEDIA HANDLERS (FULLY FIXED) ---
   const handleShopPhotosUpload = (e) => {
     const files = Array.from(e.target.files);
     const loadedPhotos = [];
@@ -184,14 +187,18 @@ function Dashboard() {
       reader.onloadend = () => {
         loadedPhotos.push(reader.result);
         if (loadedPhotos.length === files.length) {
-          setEditingShop({ ...editingShop, shopPhotos: [...(editingShop.shopPhotos || []), ...loadedPhotos] });
+          setEditingShop(prev => ({ 
+            ...prev, 
+            shopPhotos: [...(prev.shopPhotos || []), ...loadedPhotos] 
+          }));
         }
       };
       reader.readAsDataURL(file);
     });
   };
 
-  const handleServicePhotosUpload = (itemIdx, e) => {
+  // 🔥 YEH FUNCTION MISSING THA JISKI WAJAH SE RED LINE AAYI THI 🔥
+  const handleServicePhotosUpload = (index, e) => {
     const files = Array.from(e.target.files);
     const loadedPhotos = [];
     files.forEach(file => {
@@ -200,8 +207,8 @@ function Dashboard() {
         loadedPhotos.push(reader.result);
         if (loadedPhotos.length === files.length) {
           const updatedMenu = [...editingShop.menuItems];
-          updatedMenu[itemIdx].photos = [...(updatedMenu[itemIdx].photos || []), ...loadedPhotos];
-          setEditingShop({ ...editingShop, menuItems: updatedMenu });
+          updatedMenu[index].photos = [...(updatedMenu[index].photos || []), ...loadedPhotos];
+          setEditingShop({...editingShop, menuItems: updatedMenu});
         }
       };
       reader.readAsDataURL(file);
@@ -221,15 +228,17 @@ function Dashboard() {
     }
   };
 
+  // 🔥 YEH BHI UPDATE KIYA TAJE PHOTO SAVE HO JAYE 🔥
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.put(`/services/update/${editingShop.id}`, editingShop);
-      setMyShops(myShops.map(s => s.id === editingShop.id ? res.data : s));
+      await api.put(`/services/update/${editingShop.id}`, editingShop);
       setEditingShop(null); 
       alert("Shop profile and media updated!");
+      triggerRefresh(); // Reloads fresh data from DB instantly
     } catch (error) {
       console.error("Update Error:", error);
+      alert("Update failed, check backend!");
     }
   };
 
@@ -293,47 +302,36 @@ function Dashboard() {
             <p className="text-gray-400 text-sm mt-1">Manage configurations, auto-limits, and live financial analytics.</p>
           </div>
           
+          {/* 🔥 DYNAMIC NOTIFICATION BELL 🔥 */}
           <div className="relative">
             <button 
               onClick={() => setShowNotifications(!showNotifications)}
               className="p-3 bg-gray-900 border border-gray-800 rounded-full hover:bg-gray-800 transition-all relative"
             >
               <Bell size={22} className="text-gray-300" />
-              {stats.pending > 0 && (
-                <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full border-2 border-gray-950">
-                  {stats.pending}
+              {pendingBookings.length > 0 && (
+                <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full border-2 border-gray-950 animate-pulse">
+                  {pendingBookings.length}
                 </span>
               )}
             </button>
 
+            {/* Notification Dropdown Panel */}
             {showNotifications && (
-              <div className="absolute right-0 mt-3 w-80 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden">
+              <div className="absolute right-0 mt-3 w-80 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
                 <div className="p-4 border-b border-gray-800 bg-gray-950 flex justify-between items-center">
-                  <h3 className="font-bold text-white">Notifications</h3>
+                  <h3 className="font-bold text-white">Live Alerts</h3>
                   <span className="text-xs text-gray-400 cursor-pointer hover:text-white" onClick={() => setShowNotifications(false)}>Close</span>
                 </div>
-                <div className="max-h-72 overflow-y-auto">
-                  {myBookings.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-gray-500">No new notifications</div>
+                <div className="max-h-72 overflow-y-auto custom-scrollbar">
+                  {pendingBookings.length === 0 ? (
+                    <div className="p-4 text-center text-sm text-gray-500">Koi naya order nahi hai.</div>
                   ) : (
-                    myBookings.slice(0, 5).map((booking, idx) => (
+                    pendingBookings.map((book, idx) => (
                       <div key={idx} className="p-4 border-b border-gray-800/50 hover:bg-gray-800 transition-colors cursor-pointer">
-                        {booking.status === 'PENDING' || booking.status === 'WAITING' ? (
-                          <div>
-                            <p className="text-sm text-white"><span className="font-bold text-yellow-500">New Request</span> from {booking.customerEmail || "Guest"}</p>
-                            <p className="text-xs text-gray-500 mt-1">Needs your approval.</p>
-                          </div>
-                        ) : booking.status === 'COMPLETED' ? (
-                          <div>
-                            <p className="text-sm text-white"><span className="font-bold text-emerald-500">Payment Received!</span></p>
-                            <p className="text-xs text-gray-500 mt-1">{booking.customerEmail || "Guest"} paid ₹{booking.price}</p>
-                          </div>
-                        ) : (
-                          <div>
-                            <p className="text-sm text-white">Booking {booking.status.toLowerCase()}</p>
-                            <p className="text-xs text-gray-500 mt-1">For {booking.serviceName}</p>
-                          </div>
-                        )}
+                        <p className="text-sm text-white"><span className="font-bold text-yellow-500">New Request</span> from {book.customerEmail || "Guest"}</p>
+                        <p className="text-xs text-gray-500 mt-1">For {book.serviceName}</p>
+                        <p className="text-[10px] font-bold text-blue-400 mt-1">₹{book.price} • {book.paymentMode || 'CASH'}</p>
                       </div>
                     ))
                   )}
@@ -450,7 +448,7 @@ function Dashboard() {
                         )}
                         {booking.status === 'COMPLETED' && <span className="text-xs text-emerald-400 font-semibold">Paid & Resolved</span>}
 
-                        {/* 🔥 THE MASTER COMM GATEWAY FIX: Connects straight to VendorChat.jsx 🔥 */}
+                        {/* 🔥 THE MASTER COMM GATEWAY FIX */}
                         <button 
                           onClick={() => navigate(`/vendor-chat/${booking.id || 'BOK-9821'}`)}
                           className="px-3 py-1 bg-purple-600/20 text-purple-400 hover:bg-purple-600 hover:text-white rounded text-xs font-bold transition-all flex items-center gap-1 border border-purple-500/20"

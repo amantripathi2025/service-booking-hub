@@ -16,11 +16,11 @@ import CustomerCheckout from './pages/CustomerCheckout';
 import CustomerBookings from './pages/CustomerBookings';
 import CustomerReview from './pages/CustomerReview';
 import CustomerAccount from './pages/CustomerAccount';
-import CustomerChat from './pages/CustomerChat'; // 🔥 YEH NAYA CHAT PAGE IMPORT HO GAYA
+import CustomerChat from './pages/CustomerChat'; 
 
 // --- Components ---
 import CustomerBottomNav from './Component/CustomerBottomNav';
-import VendorChat from './pages/VendorCustomerChat'; // Vendor ke liye bhi chat page hai, alag route par
+import VendorChat from './pages/VendorCustomerChat'; 
 
 function App() {
   return (
@@ -34,16 +34,24 @@ function App() {
         <Route path="/add-service" element={<AddService />} />
         <Route path="/profile" element={<Profile />} />
 
-        {/* Customer Routes */}
+        {/* 🔥 FIX: Customer Routes Sync with Navigation 🔥 */}
         <Route path="/customer-home" element={<CustomerHome />} />
         <Route path="/customer-profile" element={<CustomerProfile />} />
-        <Route path="/vendor-profile/:id" element={<CustomerVendorProfile />} />
-        <Route path="/checkout/:id" element={<CustomerCheckout />} />
+        
+        {/* Isko theek kiya taaki Home se shop profile khul sake */}
+        <Route path="/customer-vendor-profile/:id" element={<CustomerVendorProfile />} />
+        
+        {/* Isko theek kiya taaki Checkout page bina error khule */}
+        <Route path="/customer-checkout" element={<CustomerCheckout />} />
+        
         <Route path="/customer-bookings" element={<CustomerBookings />} />
-        <Route path="/write-review/:id" element={<CustomerReview />} />
+        
+        {/* Isko theek kiya taaki Review page open ho */}
+        <Route path="/customer-review/:shopId" element={<CustomerReview />} />
+        
         <Route path="/customer-account" element={<CustomerAccount />} />
         
-        {/* 🔥 YEH RAHA TERA CHAT/AI ROUTE 🔥 */}
+        {/* CHAT/AI ROUTES */}
         <Route path="/chat/:vendorId" element={<CustomerChat />} />
         <Route path="/vendor-chat/:customerId" element={<VendorChat />} />
       </Routes>
