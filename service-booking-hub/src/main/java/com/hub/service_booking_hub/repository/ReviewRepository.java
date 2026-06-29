@@ -8,8 +8,6 @@ import java.util.List;
 @Repository
 public interface ReviewRepository extends MongoRepository<Review, String> {
 
-    // Kisi specific service ke saare reviews nikalne ke liye
-    List<Review> findByServiceId(String serviceId);
-
+    // Kisi specific shop/service ke saare reviews nikalne ke liye
     List<Review> findByShopId(String shopId);
 }

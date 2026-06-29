@@ -12,7 +12,7 @@ public class Review {
     @Id
     private String id;
     private String bookingId;   // Kis booking ke liye review hai
-    private String serviceId;   // Kis service ko rating mil rahi hai
+    private String shopId;      // serviceId hata kar shopId kar diya
     private String userId;      // Kis user ne review diya
     private int rating;         // 1 se 5 ke beech star rating
     private String comment;     // Customer ka feedback text
